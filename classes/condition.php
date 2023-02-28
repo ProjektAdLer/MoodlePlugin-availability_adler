@@ -6,6 +6,7 @@ namespace availability_adler;
 use core_availability\condition as availability_condition;
 use core_availability\info;
 use core_plugin_manager;
+use invalid_parameter_exception;
 
 class condition extends availability_condition {
     # https://moodledev.io/docs/apis/plugintypes/availability
@@ -14,6 +15,76 @@ class condition extends availability_condition {
     public function __construct($structure) {
         // TODO: validate structure
         $this->condition = $structure->condition;
+    }
+
+    public function evaluate_room_requirements($statement, $userid): bool {
+        // search for brackets
+        for ($i = 0; $i < strlen($statement); $i++) {
+            if ($statement[$i] == '(') {
+                $start = $i;
+                $end = $i;
+                $depth = 1;
+                for ($j = $i + 1; $j < strlen($statement); $j++) {
+                    if ($statement[$j] == '(') {
+                        $depth++;
+                    } else if ($statement[$j] == ')') {
+                        $depth--;
+                    }
+                    if ($depth == 0) {
+                        $end = $j;
+                        break;
+                    }
+                }
+                $substatement = substr($statement, $start + 1, $end - $start - 1);
+                $result = $this->evaluate_room_requirements($substatement, $userid)? 't' : 'f';
+                $statement = substr($statement, 0, $start) . $result . substr($statement, $end + 1);
+                $i = $start;
+            }
+        }
+
+        // Search for AND and OR following the rule "AND before OR"
+        // search for AND (^)
+        for ($i = 0; $i < strlen($statement); $i++) {
+            if ($statement[$i] == '^') {
+                $left = substr($statement, 0, $i);
+                $right = substr($statement, $i + 1);
+                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' && $this->evaluate_room_requirements($right, $userid) == 't')? 't' : 'f';
+                break;
+            }
+        }
+        // search for OR (v)
+        for ($i = 0; $i < strlen($statement); $i++) {
+            if ($statement[$i] == 'v') {
+                $left = substr($statement, 0, $i);
+                $right = substr($statement, $i + 1);
+                $statement = ($this->evaluate_room_requirements($left, $userid) == 't'|| $this->evaluate_room_requirements($right, $userid)=='t')?'t':'f';
+                break;
+            }
+        }
+
+        // search for NOT (!)
+        for ($i = 0; $i < strlen($statement); $i++) {
+            if ($statement[$i] == '!') {
+                $right = substr($statement, $i + 1);
+                $statement = (!$this->evaluate_room_requirements($right, $userid)=='t')?'t':'f';
+                break;
+            }
+        }
+
+        // If this place is reached the statement should be only a number (room id)
+        if (is_numeric($statement)) {
+            $statement = $this->evaluate_room((int)$statement, $userid);
+        } else if ($statement == 't' || $statement == 'f') {
+            $statement = $statement == 't';
+        } else {
+            throw new invalid_parameter_exception('Invalid statement: ' . $statement);
+        }
+
+        return $statement;
+    }
+
+    public function evaluate_room($roomid, $userid): bool {
+        return true;
     }
 
     public function is_available($not, info $info, $grabthelot, $userid) {
