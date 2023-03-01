@@ -20,6 +20,7 @@ class condition_test extends availability_adler_testcase {
             '1' => [
                 'statement' => "(5)v((7)^(4))",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     5 => true,
                     7 => true,
@@ -29,6 +30,7 @@ class condition_test extends availability_adler_testcase {
             '2' => [
                 'statement' => "(5)v((7)^(4))",
                 'expected' => false,
+                'exception' => null,
                 'room_states' => [
                     5 => false,
                     7 => true,
@@ -38,6 +40,7 @@ class condition_test extends availability_adler_testcase {
             '3' => [
                 'statement' => "(1)",
                 'expected' => false,
+                'exception' => null,
                 'room_states' => [
                     1 => false,
                 ]
@@ -45,6 +48,7 @@ class condition_test extends availability_adler_testcase {
             '4' => [
                 'statement' => "(1)",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                 ]
@@ -52,6 +56,7 @@ class condition_test extends availability_adler_testcase {
             '5' => [
                 'statement' => "(1)^(2)",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                     2 => true,
@@ -60,6 +65,7 @@ class condition_test extends availability_adler_testcase {
             '6' => [
                 'statement' => "(1)^(2)",
                 'expected' => false,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                     2 => false,
@@ -68,6 +74,7 @@ class condition_test extends availability_adler_testcase {
             '7' => [
                 'statement' => "(1)v(2)",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     1 => false,
                     2 => true,
@@ -76,6 +83,7 @@ class condition_test extends availability_adler_testcase {
             '8' => [
                 'statement' => "1v(2)",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                     2 => false,
@@ -84,6 +92,7 @@ class condition_test extends availability_adler_testcase {
             '9' => [
                 'statement' => "((1)^(2))v((3)^(4))",
                 'expected' => true,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                     2 => true,
@@ -94,9 +103,19 @@ class condition_test extends availability_adler_testcase {
             '10' => [
                 'statement' => "!((1)^(2))",
                 'expected' => false,
+                'exception' => null,
                 'room_states' => [
                     1 => true,
                     2 => true,
+                ]
+            ],
+            '11' => [
+                'statement' => "(w)^(2)",
+                'expected' => true,
+                'exception' => 'invalid_parameter_exception',
+                'room_states' => [
+                    1 => true,
+                    2 => false,
                 ]
             ],
         ];
@@ -106,12 +125,11 @@ class condition_test extends availability_adler_testcase {
     /**
      * @dataProvider provide_test_evaluate_room_requirements_data
      */
-    public function test_evaluate_room_requirements($statement, $expected, $room_states) {
+    public function test_evaluate_room_requirements($statement, $expected, $exception, $room_states) {
         // map $room_states to the format of $room_states_map_format
         $room_states = array_map(function($key, $value) {
             return [$key, 0, $value];
         }, array_keys($room_states), $room_states);
-
 
         // create mock for condition evaluate_room
         $mock = $this->getMockBuilder(condition::class)
@@ -122,15 +140,15 @@ class condition_test extends availability_adler_testcase {
         $mock->method('evaluate_room')
             ->will($this->returnValueMap($room_states));
 
-
         // make evaluate_room_requirements accessible
         $method = new ReflectionMethod(condition::class, 'evaluate_room_requirements');
-//        $method->setAccessible(true);
-//
-//
+        $method->setAccessible(true);
+
+        // if $exception is not null, expect an exception
+        if ($exception !== null) {
+            $this->expectException($exception);
+        }
+
         $this->assertEquals($expected, $method->invoke($mock, $statement, 0));
-//        $this->assertEquals($expected, $mock->evaluate_room_requirements($statement, 0));
-
-
     }
 }

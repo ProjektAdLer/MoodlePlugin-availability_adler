@@ -17,7 +17,7 @@ class condition extends availability_condition {
         $this->condition = $structure->condition;
     }
 
-    public function evaluate_room_requirements($statement, $userid): bool {
+    protected function evaluate_room_requirements($statement, $userid): bool {
         // search for brackets
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '(') {
@@ -83,7 +83,7 @@ class condition extends availability_condition {
         return $statement;
     }
 
-    public function evaluate_room($roomid, $userid): bool {
+    protected function evaluate_room($roomid, $userid): bool {
         return true;
     }
 
@@ -96,8 +96,7 @@ class condition extends availability_condition {
         }
 
         // local_adler is available
-        debugging('Not implemented', E_ERROR);
-        return false;
+        return $this->evaluate_room_requirements($this->condition, $userid);
     }
 
     public function get_description($full, $not, info $info) {
