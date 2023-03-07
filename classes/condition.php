@@ -89,7 +89,7 @@ class condition extends availability_condition {
 
     public function is_available($not, info $info, $grabthelot, $userid) {
         // check if local_adler is available
-        $plugins = core_plugin_manager::instance()->get_enabled_plugins('local_adler');
+        $plugins = core_plugin_manager::instance()->get_installed_plugins('local');
         if (!array_key_exists('local_adler', $plugins)) {
             debugging('local_adler is not available', E_WARNING);
             return true;

@@ -1,0 +1,10 @@
+{
+  "name": "moodle-availability_adler-form",
+  "builds": {
+    "moodle-availability_adler-form": {
+      "jsfiles": [
+        "form.js"
+      ]
+    }
+  }
+}
