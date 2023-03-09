@@ -10,19 +10,34 @@ use core_plugin_manager;
 use invalid_parameter_exception;
 
 class condition extends availability_condition {
-    # https://moodledev.io/docs/apis/plugintypes/availability
     protected string $condition;
 
+    /**
+     * @throws coding_exception
+     * @throws invalid_parameter_exception
+     */
     public function __construct($structure) {
         if (isset($structure->condition)) {
-            // TODO: validate structure
+            try {
+                $this->evaluate_room_requirements($structure->condition, 0, true);
+            } catch (invalid_parameter_exception $e) {
+                throw new invalid_parameter_exception('Invalid condition: ' . $e->getMessage());
+            }
             $this->condition = $structure->condition;
         } else {
             throw new coding_exception('adler statement not set');
         }
     }
 
-    protected function evaluate_room_requirements($statement, $userid): bool {
+    /**
+     * @param $statement
+     * @param $userid
+     * @param $validation_mode bool If set to true, this method is used to validate the condition. In this case,
+     * the method will not call external methods. All calls to evaluate_room will be replaced with a "true" value.
+     * @return bool
+     * @throws invalid_parameter_exception
+     */
+    protected function evaluate_room_requirements($statement, $userid, bool $validation_mode = false): bool {
         // search for brackets
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '(') {
@@ -78,7 +93,7 @@ class condition extends availability_condition {
 
         // If this place is reached the statement should be only a number (room id)
         if (is_numeric($statement)) {
-            $statement = $this->evaluate_room((int)$statement, $userid);
+            $statement = $validation_mode || $this->evaluate_room((int)$statement, $userid);
         } else if ($statement == 't' || $statement == 'f') {
             $statement = $statement == 't';
         } else {
@@ -89,6 +104,7 @@ class condition extends availability_condition {
     }
 
     protected function evaluate_room($roomid, $userid): bool {
+        // TODO: implement (requires local_adler functionality not yet existing)
         return false;
     }
 
@@ -110,8 +126,7 @@ class condition extends availability_condition {
     }
 
     public function get_description($full, $not, info $info) {
-        // TODO: use get_string
-        return 'Requires previous rooms to be completed according to the rule: ' . $this->condition;
+        return get_string('description_previous_rooms_required', 'availability_adler', $this->condition);
     }
 
     protected function get_debug_string() {
