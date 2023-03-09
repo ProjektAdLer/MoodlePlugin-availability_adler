@@ -5,7 +5,7 @@ YUI.add('moodle-availability_adler-form', function (Y, NAME) {
  *
  * @module moodle-availability_adler-form
  */
-M.availability_adler = M.availability_adler || {};
+M.availability_adler = M.availability_adler || {}; // eslint-disable-line camelcase
 
 /**
  * @class M.availability_adler.form
@@ -14,6 +14,8 @@ M.availability_adler = M.availability_adler || {};
 M.availability_adler.form = Y.Object(M.core_availability.plugin);
 
 M.availability_adler.form.getNode = function(json) {
+    // Changing value in web form is not supported.
+    M.availability_adler.condition = json.condition;
     // TODO: use get_string
     var html = '<p>AdLer rule: ' + json.condition + '</p>';
     var node = Y.Node.create('<span>' + html + '</span>');
@@ -23,7 +25,8 @@ M.availability_adler.form.getNode = function(json) {
 
 /** For my understanding this function is called when the form is submitted
  * and updates "value" with the selection the user did inside the node.
- * This functin has to be implemented.
+ * The value attribute does not cotain the individual values of the form.
+ * This function has to be implemented.
  *
  * @method fillValue
  * @param {Object} value
@@ -31,6 +34,8 @@ M.availability_adler.form.getNode = function(json) {
  * @return {Object} value
  */
 M.availability_adler.form.fillValue = function(value, node) {
+    // Changing value in web form is not supported.
+    value.condition = M.availability_adler.condition;
     return value;
 };
 

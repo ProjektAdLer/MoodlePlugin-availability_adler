@@ -3,6 +3,7 @@
 namespace availability_adler;
 
 
+use coding_exception;
 use core_availability\condition as availability_condition;
 use core_availability\info;
 use core_plugin_manager;
@@ -13,8 +14,12 @@ class condition extends availability_condition {
     protected string $condition;
 
     public function __construct($structure) {
-        // TODO: validate structure
-        $this->condition = $structure->condition;
+        if (isset($structure->condition)) {
+            // TODO: validate structure
+            $this->condition = $structure->condition;
+        } else {
+            throw new coding_exception('adler statement not set');
+        }
     }
 
     protected function evaluate_room_requirements($statement, $userid): bool {
@@ -84,19 +89,24 @@ class condition extends availability_condition {
     }
 
     protected function evaluate_room($roomid, $userid): bool {
-        return true;
+        return false;
     }
 
     public function is_available($not, info $info, $grabthelot, $userid) {
         // check if local_adler is available
         $plugins = core_plugin_manager::instance()->get_installed_plugins('local');
-        if (!array_key_exists('local_adler', $plugins)) {
+        if (!array_key_exists('adler', $plugins)) {
             debugging('local_adler is not available', E_WARNING);
-            return true;
+            $allow = true;
+        } else {
+            $allow = $this->evaluate_room_requirements($this->condition, $userid);
         }
 
-        // local_adler is available
-        return $this->evaluate_room_requirements($this->condition, $userid);
+        if ($not) {
+            $allow = !$allow;
+        }
+
+        return $allow;
     }
 
     public function get_description($full, $not, info $info) {
@@ -114,4 +124,6 @@ class condition extends availability_condition {
             'condition' => $this->condition,
         ];
     }
+
+    // TODO: include_after_restore/... ???
 }
