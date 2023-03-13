@@ -28,7 +28,7 @@ class condition extends availability_condition {
             }
             $this->condition = $structure->condition;
         } else {
-            throw new coding_exception('adler statement not set');
+            throw new coding_exception('adler condition not set');
         }
     }
 

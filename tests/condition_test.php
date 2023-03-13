@@ -4,6 +4,7 @@ namespace availability_adler;
 
 
 use availability_adler\lib\availability_adler_testcase;
+use core_availability\info;
 use ReflectionMethod;
 
 global $CFG;
@@ -127,7 +128,7 @@ class condition_test extends availability_adler_testcase {
      */
     public function test_evaluate_room_requirements($statement, $expected, $exception, $room_states) {
         // map $room_states to the format of $room_states_map_format
-        $room_states = array_map(function($key, $value) {
+        $room_states = array_map(function ($key, $value) {
             return [$key, 0, $value];
         }, array_keys($room_states), $room_states);
 
@@ -151,4 +152,40 @@ class condition_test extends availability_adler_testcase {
 
         $this->assertEquals($expected, $method->invoke($mock, $statement, 0));
     }
+
+    public function test_get_description() {
+        $info_mock = $this->getMockBuilder(info::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $condition = new condition((object)['type' => 'adler', 'condition' => '1']);
+        $result = $condition->get_description(true, 'test', $info_mock);
+
+        $this->assertIsString($result);
+        $this->assertNotEmpty($result);
+    }
+
+    public function test_get_debug_string() {
+        $condition = new condition((object)['type' => 'adler', 'condition' => '1']);
+
+        // make get_debug_string accessible
+        $method = new ReflectionMethod(condition::class, 'get_debug_string');
+        $method->setAccessible(true);
+
+        // call get_debug_string
+        $result = $method->invoke($condition);
+
+        $this->assertIsString($result);
+        $this->assertNotEmpty($result);
+    }
+
+    public function test_save() {
+        $adler_statement = (object)['type' => 'adler', 'condition' => '1'];
+
+        $condition = new condition($adler_statement);
+        $result = $condition->save();
+
+        $this->assertEquals($adler_statement, $result);
+    }
+
+
 }
