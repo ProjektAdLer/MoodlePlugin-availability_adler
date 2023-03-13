@@ -3,11 +3,14 @@
 namespace availability_adler;
 
 
+use base_logger;
 use coding_exception;
 use core_availability\condition as availability_condition;
 use core_availability\info;
 use core_plugin_manager;
 use invalid_parameter_exception;
+use moodle_exception;
+use restore_dbops;
 
 class condition extends availability_condition {
     protected string $condition;
@@ -56,7 +59,7 @@ class condition extends availability_condition {
                     }
                 }
                 $substatement = substr($statement, $start + 1, $end - $start - 1);
-                $result = $this->evaluate_room_requirements($substatement, $userid)? 't' : 'f';
+                $result = $this->evaluate_room_requirements($substatement, $userid) ? 't' : 'f';
                 $statement = substr($statement, 0, $start) . $result . substr($statement, $end + 1);
                 $i = $start;
             }
@@ -68,7 +71,7 @@ class condition extends availability_condition {
             if ($statement[$i] == '^') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' && $this->evaluate_room_requirements($right, $userid) == 't')? 't' : 'f';
+                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' && $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -77,7 +80,7 @@ class condition extends availability_condition {
             if ($statement[$i] == 'v') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid) == 't'|| $this->evaluate_room_requirements($right, $userid)=='t')?'t':'f';
+                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' || $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -86,7 +89,7 @@ class condition extends availability_condition {
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '!') {
                 $right = substr($statement, $i + 1);
-                $statement = (!$this->evaluate_room_requirements($right, $userid)=='t')?'t':'f';
+                $statement = (!$this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -134,11 +137,48 @@ class condition extends availability_condition {
     }
 
     public function save() {
-        return (object) [
+        return (object)[
             'type' => 'adler',
             'condition' => $this->condition,
         ];
     }
 
-    // TODO: include_after_restore/... ???
+    /** Restore logic for completion condition
+     * Translates the room/section ids in the condition from the backup file to the new ids in the restored course.
+     *
+     * @param string $restoreid
+     * @param int $courseid
+     * @param base_logger $logger
+     * @param string $name
+     * @return bool
+     * @throws moodle_exception
+     */
+    public function update_after_restore($restoreid, $courseid, base_logger $logger, $name) {
+        $updated_condition = "";
+        for ($i = 0; $i < strlen($this->condition); $i++) {
+            $char = $this->condition[$i];
+            if (is_numeric($char)) {
+                // find last digit of number
+                $j = $i + 1;
+                while ($j < strlen($this->condition) && is_numeric($this->condition[$j])) {
+                    $j++;
+                }
+                $number = substr($this->condition, $i, $j - $i);
+                $i = $j - 1;
+
+                // add updated id to new string
+                $updated_id = restore_dbops::get_backup_ids_record($restoreid, 'course_section', $number);
+                if ($updated_id == false) {
+                    throw new moodle_exception('unknown_section', 'availability_adler', '', NULL, 'section: ' . $match);
+                }
+                $updated_condition .= $updated_id->newitemid;
+            } else {
+                $updated_condition .= $char;
+            }
+        }
+
+        $condition_changed = $updated_condition != $this->condition;
+        $this->condition = $updated_condition;
+        return $condition_changed;
+    }
 }
