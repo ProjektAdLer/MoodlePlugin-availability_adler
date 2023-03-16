@@ -15,6 +15,8 @@ use restore_dbops;
 class condition extends availability_condition {
     protected string $condition;
 
+    protected $core_plugin_manager_instance;
+
     /**
      * @throws coding_exception
      * @throws invalid_parameter_exception
@@ -30,6 +32,8 @@ class condition extends availability_condition {
         } else {
             throw new coding_exception('adler condition not set');
         }
+
+        $this->core_plugin_manager_instance = core_plugin_manager::instance();
     }
 
     /**
@@ -40,7 +44,8 @@ class condition extends availability_condition {
      * @return bool
      * @throws invalid_parameter_exception
      */
-    protected function evaluate_room_requirements($statement, $userid, bool $validation_mode = false): bool {
+    public function evaluate_room_requirements($statement, $userid, bool $validation_mode = false): bool {
+        // TODO: protected
         // search for brackets
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '(') {
@@ -111,9 +116,10 @@ class condition extends availability_condition {
         return false;
     }
 
+
     public function is_available($not, info $info, $grabthelot, $userid) {
         // check if local_adler is available
-        $plugins = core_plugin_manager::instance()->get_installed_plugins('local');
+        $plugins = $this->core_plugin_manager_instance->get_installed_plugins('local');
         if (!array_key_exists('adler', $plugins)) {
             debugging('local_adler is not available', E_WARNING);
             $allow = true;

@@ -5,6 +5,8 @@ namespace availability_adler;
 
 use availability_adler\lib\availability_adler_testcase;
 use core_availability\info;
+use core_plugin_manager;
+use ReflectionClass;
 use ReflectionMethod;
 
 global $CFG;
@@ -187,5 +189,73 @@ class condition_test extends availability_adler_testcase {
         $this->assertEquals($adler_statement, $result);
     }
 
+    public function provide_test_is_available_data() {
+        return [
+            '1' => [
+                'installed_plugins' => ['adler' => '123'],
+                'evaluate_room_requirements' => true,
+                'not' => false,
+                'expected' => true
+            ],
+            '2' => [
+                'installed_plugins' => ['adler' => '123'],
+                'evaluate_room_requirements' => true,
+                'not' => true,
+                'expected' => false
+            ],
+            '3' => [
+                'installed_plugins' => ['adler' => '123'],
+                'evaluate_room_requirements' => false,
+                'not' => false,
+                'expected' => false
+            ],
+            '4' => [
+                'installed_plugins' => [],
+                'evaluate_room_requirements' => true,
+                'not' => true,
+                'expected' => false
+            ],
+        ];
+    }
 
+    /**
+     * @dataProvider provide_test_is_available_data
+     */
+    public function test_is_available(array $installed_plugins, bool $evaluate_room_requirements, bool $not, bool $expected) {
+        $info_mock = $this->getMockBuilder(info::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+
+        $core_plugin_manager_mock = $this->getMockBuilder(core_plugin_manager::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $core_plugin_manager_mock->method('get_installed_plugins')
+            ->willReturn($installed_plugins);
+
+
+        $condition_mock = $this->getMockBuilder(condition::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['evaluate_room_requirements'])
+            ->getMock();
+        $condition_mock->method('evaluate_room_requirements')
+            ->willReturn($evaluate_room_requirements);
+        // set protected property core_plugin_manager_instance of condition_mock
+        $reflection = new ReflectionClass($condition_mock);
+        $property = $reflection->getProperty('core_plugin_manager_instance');
+        $property->setAccessible(true);
+        $property->setValue($condition_mock, $core_plugin_manager_mock);
+        // set condition
+        $property = $reflection->getProperty('condition');
+        $property->setAccessible(true);
+        $property->setValue($condition_mock, '1');
+
+
+        // invoke method is_available on $reflection
+//        $method = $reflection->getMethod('is_available');
+//        $result = $method->invoke($condition_mock, $not, $info_mock, true, 0);
+        $result = $condition_mock->is_available($not,$info_mock,true,0);
+
+        $this->assertEquals($expected, $result);
+    }
 }
