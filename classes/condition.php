@@ -12,9 +12,11 @@ use invalid_parameter_exception;
 use moodle_exception;
 use restore_dbops;
 
-class condition extends availability_condition {
-    protected string $condition;
 
+class condition extends availability_condition {
+    use static_call_trait;
+
+    protected string $condition;
     protected $core_plugin_manager_instance;
 
     /**
@@ -173,9 +175,9 @@ class condition extends availability_condition {
                 $i = $j - 1;
 
                 // add updated id to new string
-                $updated_id = restore_dbops::get_backup_ids_record($restoreid, 'course_section', $number);
+                $updated_id = $this->callStatic(restore_dbops::class, 'get_backup_ids_record', $restoreid, 'course_section', $number);
                 if ($updated_id == false) {
-                    throw new moodle_exception('unknown_section', 'availability_adler', '', NULL, 'section: ' . $match);
+                    throw new moodle_exception('unknown_section', 'availability_adler', '', NULL, 'section: ' . $number);
                 }
                 $updated_condition .= $updated_id->newitemid;
             } else {

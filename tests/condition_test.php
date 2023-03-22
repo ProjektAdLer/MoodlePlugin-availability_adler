@@ -4,18 +4,65 @@ namespace availability_adler;
 
 
 use availability_adler\lib\availability_adler_testcase;
+use base_logger;
 use core_availability\info;
 use core_plugin_manager;
+use moodle_exception;
 use ReflectionClass;
 use ReflectionMethod;
+use restore_dbops;
 
 global $CFG;
 require_once($CFG->dirroot . '/availability/condition/adler/tests/lib/adler_testcase.php');
 
 
 class condition_test extends availability_adler_testcase {
-    public function setUp(): void {
-        parent::setUp();
+    public function provide_test_construct_data() {
+        return [
+            'valid' => [
+                'structure' => (object) [
+                    'type' => 'adler',
+                    'condition' => '(1)^(2)'
+                ],
+                'expected_exception' => null,
+                'expected_condition' => '(1)^(2)'
+            ],
+            'invalid condition' => [
+                'structure' => (object) [
+                    'type' => 'adler',
+                    'condition' => '(1)^(2'
+                ],
+                'expected_exception' => 'invalid_parameter_exception',
+                'expected_condition' => null
+            ],
+            'missing condition' => [
+                'structure' => (object) [
+                    'type' => 'adler',
+                ],
+                'expected_exception' => 'coding_exception',
+                'expected_condition' => null
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provide_test_construct_data
+     */
+    public function test_construct($structure, $expected_exception, $expected_condition) {
+        if ($expected_exception) {
+            $this->expectException($expected_exception);
+        }
+
+        $condition = new condition($structure);
+
+        // get condition
+        $condition_reflection = new ReflectionClass($condition);
+        $condition_property = $condition_reflection->getProperty('condition');
+        $condition_property->setAccessible(true);
+        $condition = $condition_property->getValue($condition);
+
+        $this->assertEquals($expected_condition, $condition);
+
     }
 
     public function provide_test_evaluate_room_requirements_data() {
@@ -252,10 +299,84 @@ class condition_test extends availability_adler_testcase {
 
 
         // invoke method is_available on $reflection
+        $result = $condition_mock->is_available($not, $info_mock, true, 0);
+        // alternative approach
 //        $method = $reflection->getMethod('is_available');
 //        $result = $method->invoke($condition_mock, $not, $info_mock, true, 0);
-        $result = $condition_mock->is_available($not,$info_mock,true,0);
+
 
         $this->assertEquals($expected, $result);
+    }
+
+    public function provide_test_update_after_restore_data() {
+        return [
+            '1' => [
+                'condition' => "(1)^(20)",
+                'backup_id_mappings' => [
+                    [1, (object)["newitemid" => "3"]],
+                    [20, (object)["newitemid" => "4"]],
+                ],
+                'expected_updated_condition' => "(3)^(4)",
+                'expect_exception' => false,
+            ],
+            '2' => [
+                'condition' => "(1)^(2)",
+                'backup_id_mappings' => [
+                    [1, (object)["newitemid" => "3"]],
+                    [2, false],
+                ],
+                'expected_updated_condition' => null,
+                'expect_exception' => moodle_exception::class,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provide_test_update_after_restore_data
+     */
+    public function test_update_after_restore($condition, $backup_id_mappings, $expected_updated_condition, $expect_exception) {
+        global $CFG;
+        require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
+
+        // unused but required variables
+        $restoreid = 123;
+        $courseid = 456;
+        $base_logger_mock = $this->getMockBuilder(base_logger::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $name = 'test';
+
+        // create get_backup_ids_record return map
+        $return_map = [];
+        foreach ($backup_id_mappings as $mapping) {
+            $return_map[] = [restore_dbops::class, 'get_backup_ids_record', $restoreid, 'course_section', (string)$mapping[0], $mapping[1]];
+        }
+
+        // mock condition
+        $condition_mock = $this->getMockBuilder(condition::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['callStatic'])
+            ->getMock();
+        $condition_mock->method('callStatic')
+            ->will($this->returnValueMap($return_map));
+
+        // set condition
+        $reflection = new ReflectionClass($condition_mock);
+        $property = $reflection->getProperty('condition');
+        $property->setAccessible(true);
+        $property->setValue($condition_mock, $condition);
+
+        // setup exception
+        if ($expect_exception) {
+            $this->expectException($expect_exception);
+        }
+
+        // call update_after_restore
+        $result = $condition_mock->update_after_restore($restoreid, $courseid, $base_logger_mock, $name);
+
+        // verify result
+        $this->assertEquals(true, $result);
+        $updated_condition = $property->getValue($condition_mock);
+        $this->assertEquals($expected_updated_condition, $updated_condition);
     }
 }
