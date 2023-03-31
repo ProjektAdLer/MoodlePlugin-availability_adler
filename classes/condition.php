@@ -2,6 +2,9 @@
 
 namespace availability_adler;
 
+global $CFG;
+require_once($CFG->dirroot . "/local/adler/classes/plugin_interface.php");
+
 
 use base_logger;
 use coding_exception;
@@ -9,6 +12,7 @@ use core_availability\condition as availability_condition;
 use core_availability\info;
 use core_plugin_manager;
 use invalid_parameter_exception;
+use local_adler\plugin_interface;
 use moodle_exception;
 use restore_dbops;
 
@@ -113,9 +117,19 @@ class condition extends availability_condition {
         return $statement;
     }
 
+    /**
+     * @throws moodle_exception
+     */
     protected function evaluate_room($roomid, $userid): bool {
-        // TODO: implement (requires local_adler functionality not yet existing)
-        return false;
+        try {
+            return $this->callStatic(plugin_interface::class, 'is_section_completed', $roomid, $userid);
+        } catch (moodle_exception $e) {
+            if ($e->errorcode == 'user_not_enrolled') {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
     }
 
 
