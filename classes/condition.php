@@ -70,7 +70,7 @@ class condition extends availability_condition {
                     }
                 }
                 $substatement = substr($statement, $start + 1, $end - $start - 1);
-                $result = $this->evaluate_room_requirements($substatement, $userid) ? 't' : 'f';
+                $result = $this->evaluate_room_requirements($substatement, $userid, $validation_mode) ? 't' : 'f';
                 $statement = substr($statement, 0, $start) . $result . substr($statement, $end + 1);
                 $i = $start;
             }
@@ -82,7 +82,7 @@ class condition extends availability_condition {
             if ($statement[$i] == '^') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' && $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
+                $statement = ($this->evaluate_room_requirements($left, $userid, $validation_mode) == 't' && $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -91,7 +91,7 @@ class condition extends availability_condition {
             if ($statement[$i] == 'v') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid) == 't' || $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
+                $statement = ($this->evaluate_room_requirements($left, $userid, $validation_mode) == 't' || $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -100,7 +100,7 @@ class condition extends availability_condition {
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '!') {
                 $right = substr($statement, $i + 1);
-                $statement = (!$this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
+                $statement = (!$this->evaluate_room_requirements($right, $userid, $validation_mode) == 't') ? 't' : 'f';
                 break;
             }
         }
