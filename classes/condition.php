@@ -150,8 +150,62 @@ class condition extends availability_condition {
         return $allow;
     }
 
+    private function get_room_name($roomid) {
+        // TODO local_adler
+        global $DB;
+        $room = $DB->get_record('course_sections', ['id' => $roomid]);
+        return $room->name;
+    }
+
+    private function replace_room_ids_with_names($statement) {
+        $chars = ['(', ')', '^', 'v', '!'];
+        $splitted_statement = [$statement];
+        foreach ($chars as $char) {
+            $new_statement = [];
+            foreach ($splitted_statement as $part) {
+                $part = explode($char, $part);
+                for ($i = 0; $i < count($part); $i++) {
+                    $new_statement[] = $part[$i];
+                    if ($i < count($part) - 1) {
+                        $new_statement[] = $char;
+                    }
+                }
+            }
+            $splitted_statement = $new_statement;
+        }
+
+        $updated_statement = "";
+        foreach ($splitted_statement as $part) {
+            if (is_numeric($part)) {
+                if ($this->evaluate_room($part, $GLOBALS['USER']->id)) {
+                    $updated_statement .= '<span style="color: green;">';
+                } else {
+                    $updated_statement .= '<span style="color: red;">';
+                }
+                $updated_statement .= htmlspecialchars($this->get_room_name($part), ENT_QUOTES, 'UTF-8') . '</span> ';
+            } else {
+                switch ($part) {
+                    case '^':
+                        $updated_statement .= get_string("condition_operator_pretty_and", "availability_adler"). ' ';
+                        break;
+                    case 'v':
+                        $updated_statement .= get_string("condition_operator_pretty_or", "availability_adler") . ' ';
+                        break;
+                    case '!':
+                        $updated_statement .= get_string("condition_operator_pretty_not", "availability_adler") . ' ';
+                        break;
+                    default:
+                        $updated_statement .= $part;
+                }
+            }
+        }
+
+        return "\"" . trim($updated_statement) . "\"";
+    }
+
     public function get_description($full, $not, info $info) {
-        return get_string('description_previous_rooms_required', 'availability_adler', $this->condition);
+        $translation_key = $not ? 'description_previous_rooms_required_not' : 'description_previous_rooms_required';
+        return get_string($translation_key, 'availability_adler', $this->replace_room_ids_with_names($this->condition));
     }
 
     protected function get_debug_string() {
