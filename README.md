@@ -1,4 +1,7 @@
 # availability_adler
+
+[![Coverage Status](https://coveralls.io/repos/github/ProjektAdLer/MoodlePluginAvailability/badge.svg?branch=main)](https://coveralls.io/github/ProjektAdLer/MoodlePluginAvailability?branch=main)
+
 Dieses Plugin implementiert eine _availability condition_ für die Adler-Raum-Logik (`requiredSpacesToEnter`, bspw `(5)v((7)^(4))`). 
 
 Ist das Haupt-Plugin nicht installiert wird die durch dieses Plugin implementierte _availability condition_ immer `true` zurück geben
@@ -15,6 +18,12 @@ Folgende Versionen werden unterstützt:
 ## Installation
 1. Plugin in moodle in den Ordner `availability/condition` entpacken (bspw` moodle/availability/condition/adler/version.php` muss es geben)
 2. Moodle upgrade ausführen
+
+## Dev Setup / Tests
+Dieses Plugin nutzt Mockery für Tests.
+Die composer.json von Moodle enthält Mockery nicht, daher enthält das Plugin eine eigene composer.json.
+Diese ist (derzeit) nur für die Entwicklung relevant, sie enthält keine Dependencies die für die normale Nutzung notwendig sind.
+Um die dev-dependencies zu installieren muss `composer install` im Plugin-Ordner ausgeführt werden.
 
 ## Plugin Dokumentation
 

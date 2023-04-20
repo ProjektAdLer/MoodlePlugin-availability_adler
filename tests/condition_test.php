@@ -7,6 +7,8 @@ use availability_adler\lib\availability_adler_testcase;
 use base_logger;
 use core_availability\info;
 use core_plugin_manager;
+use local_adler\plugin_interface;
+use Mockery;
 use moodle_exception;
 use ReflectionClass;
 use ReflectionMethod;
@@ -20,7 +22,7 @@ class condition_test extends availability_adler_testcase {
     public function provide_test_construct_data() {
         return [
             'valid' => [
-                'structure' => (object) [
+                'structure' => (object)[
                     'type' => 'adler',
                     'condition' => '(1)^(2)'
                 ],
@@ -28,7 +30,7 @@ class condition_test extends availability_adler_testcase {
                 'expected_condition' => '(1)^(2)'
             ],
             'invalid condition' => [
-                'structure' => (object) [
+                'structure' => (object)[
                     'type' => 'adler',
                     'condition' => '(1)^(2'
                 ],
@@ -36,7 +38,7 @@ class condition_test extends availability_adler_testcase {
                 'expected_condition' => null
             ],
             'missing condition' => [
-                'structure' => (object) [
+                'structure' => (object)[
                     'type' => 'adler',
                 ],
                 'expected_exception' => 'coding_exception',
@@ -62,8 +64,59 @@ class condition_test extends availability_adler_testcase {
         $condition = $condition_property->getValue($condition);
 
         $this->assertEquals($expected_condition, $condition);
-
     }
+
+    public function provide_test_evaluate_room_data() {
+        return [
+            [
+                'exception' => null,
+            ], [
+                'exception' => 'user_not_enrolled',
+            ], [
+                'exception' => 'blub',
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider provide_test_evaluate_room_data
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_evaluate_room($exception) {
+        $plugin_interface_mock = Mockery::mock('overload:'. plugin_interface::class);
+        if ($exception == null) {
+            $plugin_interface_mock->shouldReceive('is_section_completed')
+                ->once()
+                ->with(1,1)
+                ->andReturn(true);
+        } else {
+            $plugin_interface_mock->shouldReceive('is_section_completed')
+                ->once()
+                ->with(1,1)
+                ->andThrow(new moodle_exception($exception));
+        }
+        if ($exception != null && $exception != 'user_not_enrolled') {
+            $this->expectException(moodle_exception::class);
+            $this->expectExceptionMessage($exception);
+        }
+
+        $reflected_class = new ReflectionClass(condition::class);
+        $method = $reflected_class->getMethod('evaluate_room');
+        $method->setAccessible(true);
+
+
+        $condition = Mockery::mock(condition::class);
+        $result = $method->invoke($condition,1,1);
+
+
+        if ($exception == null) {
+            $this->assertTrue($result);
+        } else {
+            $this->assertFalse($result);
+        }
+    }
+
 
     public function provide_test_evaluate_room_requirements_data() {
         return [
@@ -184,7 +237,7 @@ class condition_test extends availability_adler_testcase {
         // create mock for condition evaluate_room
         $mock = $this->getMockBuilder(condition::class)
             ->disableOriginalConstructor()
-            ->setMethods(['evaluate_room'])
+            ->onlyMethods(['evaluate_room'])
             ->getMock();
         // set return values for evaluate_room
         $mock->method('evaluate_room')
@@ -202,15 +255,88 @@ class condition_test extends availability_adler_testcase {
         $this->assertEquals($expected, $method->invoke($mock, $statement, 0));
     }
 
+    public function provide_test_make_condition_user_readable_data() {
+        return [
+            [
+                'condition' => '1',
+                'room_states' => [
+                    1 => true,
+                ],
+                'section_names' => [
+                    1 => 'Section 1'
+                ],
+                'expected' => '"<span style="color: green;">Section 1</span>"',
+            ],
+            [
+                'condition' => '1v2',
+                'room_states' => [
+                    1 => true,
+                    2 => false,
+                ],
+                'section_names' => [
+                    1 => 'Section 1',
+                    2 => 'Section 2'
+                ],
+                'expected' => '"<span style="color: green;">Section 1</span> or <span style="color: red;">Section 2</span>"',
+            ],
+            [
+                'condition' => '1^!(2v3)',
+                'room_states' => [
+                    1 => true,
+                    2 => false,
+                    3 => true,
+                ],
+                'section_names' => [
+                    1 => 'Section 1',
+                    2 => 'Section 2',
+                    3 => 'Section 3'
+                ],
+                'expected' => '"<span style="color: green;">Section 1</span> and not (<span style="color: red;">Section 2</span> or <span style="color: green;">Section 3</span>)"',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provide_test_make_condition_user_readable_data
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_make_condition_user_readable($condition, $room_states, $section_names, $expected) {
+        $condition_mock = Mockery::mock(condition::class)->makePartial();
+        $condition_mock->shouldAllowMockingProtectedMethods();
+
+        foreach ($room_states as $room_id => $room_state) {
+            $condition_mock->shouldReceive('evaluate_room')->with($room_id, 0)->andReturn($room_state);
+        }
+
+        $plugin_interface_mock = Mockery::mock('overload:' . plugin_interface::class);
+        $plugin_interface_mock->shouldReceive('get_section_name')->andReturnUsing(function ($section_id) use ($section_names) {
+            return $section_names[$section_id];
+        });
+
+        $this->assertEquals($expected, $condition_mock->make_condition_user_readable($condition, 0));
+    }
+
     public function test_get_description() {
+        $condition_mock = Mockery::mock(condition::class)->makePartial();
+        $condition_mock->shouldAllowMockingProtectedMethods();
+        $condition_mock->shouldReceive('make_condition_user_readable')
+            ->with("condition")
+            ->andReturn('test');
+
+        $reflected_class = new ReflectionClass(condition::class);
+        $reflected_property = $reflected_class->getProperty('condition');
+        $reflected_property->setAccessible(true);
+        $reflected_property->setValue($condition_mock, "condition");
+
         $info_mock = $this->getMockBuilder(info::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $condition = new condition((object)['type' => 'adler', 'condition' => '1']);
-        $result = $condition->get_description(true, 'test', $info_mock);
+
+        $result = $condition_mock->get_description(true, false, $info_mock);
 
         $this->assertIsString($result);
-        $this->assertNotEmpty($result);
+        $this->assertStringContainsString('test', $result);
     }
 
     public function test_get_debug_string() {

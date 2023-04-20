@@ -2,15 +2,13 @@
 
 namespace availability_adler;
 
-global $CFG;
-require_once($CFG->dirroot . "/local/adler/classes/plugin_interface.php");
-
 
 use base_logger;
 use coding_exception;
 use core_availability\condition as availability_condition;
 use core_availability\info;
 use core_plugin_manager;
+use dml_exception;
 use invalid_parameter_exception;
 use local_adler\plugin_interface;
 use moodle_exception;
@@ -122,7 +120,7 @@ class condition extends availability_condition {
      */
     protected function evaluate_room($roomid, $userid): bool {
         try {
-            return $this->callStatic(plugin_interface::class, 'is_section_completed', $roomid, $userid);
+            return plugin_interface::is_section_completed($roomid, $userid);
         } catch (moodle_exception $e) {
             if ($e->errorcode == 'user_not_enrolled') {
                 return false;
@@ -150,14 +148,18 @@ class condition extends availability_condition {
         return $allow;
     }
 
-    private function get_room_name($roomid) {
-        // TODO local_adler
-        global $DB;
-        $room = $DB->get_record('course_sections', ['id' => $roomid]);
-        return $room->name;
-    }
 
-    private function replace_room_ids_with_names($statement) {
+    /** This method is used to make the condition user readable.
+     * It will replace all section ids with section names.
+     * Section names are colored according to the section status.
+     * It also replaced the ugly math symbols with the readable text.
+     * @param $statement string The condition
+     * @return string The user readable condition
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    protected function make_condition_user_readable(string $statement): string {
         $chars = ['(', ')', '^', 'v', '!'];
         $splitted_statement = [$statement];
         foreach ($chars as $char) {
@@ -182,14 +184,15 @@ class condition extends availability_condition {
                 } else {
                     $updated_statement .= '<span style="color: red;">';
                 }
-                $updated_statement .= htmlspecialchars($this->get_room_name($part), ENT_QUOTES, 'UTF-8') . '</span> ';
+                $section_name = plugin_interface::get_section_name($part);
+                $updated_statement .= htmlspecialchars($section_name, ENT_QUOTES, 'UTF-8') . '</span>';
             } else {
                 switch ($part) {
                     case '^':
-                        $updated_statement .= get_string("condition_operator_pretty_and", "availability_adler"). ' ';
+                        $updated_statement .= ' ' . get_string("condition_operator_pretty_and", "availability_adler"). ' ';
                         break;
                     case 'v':
-                        $updated_statement .= get_string("condition_operator_pretty_or", "availability_adler") . ' ';
+                        $updated_statement .= ' ' . get_string("condition_operator_pretty_or", "availability_adler") . ' ';
                         break;
                     case '!':
                         $updated_statement .= get_string("condition_operator_pretty_not", "availability_adler") . ' ';
@@ -205,7 +208,7 @@ class condition extends availability_condition {
 
     public function get_description($full, $not, info $info) {
         $translation_key = $not ? 'description_previous_rooms_required_not' : 'description_previous_rooms_required';
-        return get_string($translation_key, 'availability_adler', $this->replace_room_ids_with_names($this->condition));
+        return get_string($translation_key, 'availability_adler', $this->make_condition_user_readable($this->condition));
     }
 
     protected function get_debug_string() {
