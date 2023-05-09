@@ -7,13 +7,17 @@ Dieses Plugin implementiert eine _availability condition_ für die Adler-Raum-Lo
 Ist das Haupt-Plugin nicht installiert wird die durch dieses Plugin implementierte _availability condition_ immer `true` zurück geben
 
 ## Kompatibilität
-Folgende Versionen werden unterstützt:
+Die minimal notwendige Moodle Version ist auf 3.11.12 gesetzt, daher wird die Installation auf älteren Versionen nicht funktionieren.
+Prinzipiell sollte das Plugin auch auf älteren Versionen funktionieren, dies wird aber nicht getestet.
 
-| Moodle Branch     | PHP Version |
-|-------------------|-------------|
-| MOODLE_311_STABLE | 7.4         |
-| MOODLE_401_STABLE | 7.4         |
-| MOODLE_401_STABLE | 8.1         |
+Folgende Versionen werden unterstützt (mit mariadb und postresql getestet):
+
+| Moodle Branch           | PHP Version |
+|-------------------------|-------------|
+| MOODLE_311_STABLE       | 7.4         |
+| MOODLE_401_STABLE (LTS) | 7.4         |
+| MOODLE_401_STABLE (LTS) | 8.1         |
+| MOODLE_402_STABLE       | 8.1         |
 
 ## Installation
 1. Plugin in moodle in den Ordner `availability/condition` entpacken (bspw` moodle/availability/condition/adler/version.php` muss es geben)
