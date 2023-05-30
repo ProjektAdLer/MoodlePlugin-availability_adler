@@ -20,8 +20,9 @@ Folgende Versionen werden unterstützt (mit mariadb und postresql getestet):
 | MOODLE_402_STABLE       | 8.1         |
 
 ## Installation
-1. Plugin in moodle in den Ordner `availability/condition` entpacken (bspw` moodle/availability/condition/adler/version.php` muss es geben)
-2. Moodle upgrade ausführen
+1. Dieses Plugin benötigt das Plugin `local_adler` als Abhängigkeit. Beide müssen zeitgleich installiert werden (= vor dem upgrade in die Moodle-Installation entpackt sein). Installation siehe `local_adler`
+2. Plugin in moodle in den Ordner `availability/condition` entpacken (bspw` moodle/availability/condition/adler/version.php` muss es geben)
+3. Moodle upgrade ausführen
 
 ## Dev Setup / Tests
 Dieses Plugin nutzt Mockery für Tests.
