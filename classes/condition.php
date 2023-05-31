@@ -28,7 +28,7 @@ class condition extends availability_condition {
     public function __construct($structure) {
         if (isset($structure->condition)) {
             try {
-                $this->evaluate_room_requirements($structure->condition, 0, true);
+                $this->evaluate_section_requirements($structure->condition, 0, true);
             } catch (invalid_parameter_exception $e) {
                 throw new invalid_parameter_exception('Invalid condition: ' . $e->getMessage());
             }
@@ -44,11 +44,12 @@ class condition extends availability_condition {
      * @param $statement
      * @param $userid
      * @param $validation_mode bool If set to true, this method is used to validate the condition. In this case,
-     * the method will not call external methods. All calls to evaluate_room will be replaced with a "true" value.
+     * the method will not call external methods. All calls to evaluate_section will be replaced with a "true" value.
      * @return bool
      * @throws invalid_parameter_exception
+     * @throws moodle_exception
      */
-    public function evaluate_room_requirements($statement, $userid, bool $validation_mode = false): bool {
+    public function evaluate_section_requirements($statement, $userid, bool $validation_mode = false): bool {
         // TODO: protected
         // search for brackets
         for ($i = 0; $i < strlen($statement); $i++) {
@@ -68,7 +69,7 @@ class condition extends availability_condition {
                     }
                 }
                 $substatement = substr($statement, $start + 1, $end - $start - 1);
-                $result = $this->evaluate_room_requirements($substatement, $userid, $validation_mode) ? 't' : 'f';
+                $result = $this->evaluate_section_requirements($substatement, $userid, $validation_mode) ? 't' : 'f';
                 $statement = substr($statement, 0, $start) . $result . substr($statement, $end + 1);
                 $i = $start;
             }
@@ -80,7 +81,7 @@ class condition extends availability_condition {
             if ($statement[$i] == '^') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid, $validation_mode) == 't' && $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
+                $statement = ($this->evaluate_section_requirements($left, $userid, $validation_mode) == 't' && $this->evaluate_section_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -89,7 +90,7 @@ class condition extends availability_condition {
             if ($statement[$i] == 'v') {
                 $left = substr($statement, 0, $i);
                 $right = substr($statement, $i + 1);
-                $statement = ($this->evaluate_room_requirements($left, $userid, $validation_mode) == 't' || $this->evaluate_room_requirements($right, $userid) == 't') ? 't' : 'f';
+                $statement = ($this->evaluate_section_requirements($left, $userid, $validation_mode) == 't' || $this->evaluate_section_requirements($right, $userid) == 't') ? 't' : 'f';
                 break;
             }
         }
@@ -98,14 +99,14 @@ class condition extends availability_condition {
         for ($i = 0; $i < strlen($statement); $i++) {
             if ($statement[$i] == '!') {
                 $right = substr($statement, $i + 1);
-                $statement = (!$this->evaluate_room_requirements($right, $userid, $validation_mode) == 't') ? 't' : 'f';
+                $statement = (!$this->evaluate_section_requirements($right, $userid, $validation_mode) == 't') ? 't' : 'f';
                 break;
             }
         }
 
-        // If this place is reached the statement should be only a number (room id)
+        // If this place is reached the statement should be only a number (section id)
         if (is_numeric($statement)) {
-            $statement = $validation_mode || $this->evaluate_room((int)$statement, $userid);
+            $statement = $validation_mode || $this->evaluate_section((int)$statement, $userid);
         } else if ($statement == 't' || $statement == 'f') {
             $statement = $statement == 't';
         } else {
@@ -118,9 +119,9 @@ class condition extends availability_condition {
     /**
      * @throws moodle_exception
      */
-    protected function evaluate_room($roomid, $userid): bool {
+    protected function evaluate_section($section_id, $userid): bool {
         try {
-            return plugin_interface::is_section_completed($roomid, $userid);
+            return plugin_interface::is_section_completed($section_id, $userid);
         } catch (moodle_exception $e) {
             if ($e->errorcode == 'user_not_enrolled') {
                 return false;
@@ -138,7 +139,7 @@ class condition extends availability_condition {
             debugging('local_adler is not available', E_WARNING);
             $allow = true;
         } else {
-            $allow = $this->evaluate_room_requirements($this->condition, $userid);
+            $allow = $this->evaluate_section_requirements($this->condition, $userid);
         }
 
         if ($not) {
@@ -179,7 +180,7 @@ class condition extends availability_condition {
         $updated_statement = "";
         foreach ($splitted_statement as $part) {
             if (is_numeric($part)) {
-                if ($this->evaluate_room($part, $GLOBALS['USER']->id)) {
+                if ($this->evaluate_section($part, $GLOBALS['USER']->id)) {
                     $updated_statement .= '<span style="color: green;">';
                 } else {
                     $updated_statement .= '<span style="color: red;">';
@@ -207,12 +208,12 @@ class condition extends availability_condition {
     }
 
     public function get_description($full, $not, info $info) {
-        $translation_key = $not ? 'description_previous_rooms_required_not' : 'description_previous_rooms_required';
+        $translation_key = $not ? 'description_previous_sections_required_not' : 'description_previous_sections_required';
         return get_string($translation_key, 'availability_adler', $this->make_condition_user_readable($this->condition));
     }
 
     protected function get_debug_string() {
-        return 'Room condition: ' . $this->condition;
+        return 'Section condition: ' . $this->condition;
     }
 
     public function save() {

@@ -66,7 +66,7 @@ class condition_test extends availability_adler_testcase {
         $this->assertEquals($expected_condition, $condition);
     }
 
-    public function provide_test_evaluate_room_data() {
+    public function provide_test_evaluate_section_data() {
         return [
             [
                 'exception' => null,
@@ -79,11 +79,11 @@ class condition_test extends availability_adler_testcase {
     }
 
     /**
-     * @dataProvider provide_test_evaluate_room_data
+     * @dataProvider provide_test_evaluate_section_data
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
-    public function test_evaluate_room($exception) {
+    public function test_evaluate_section($exception) {
         $plugin_interface_mock = Mockery::mock('overload:'. plugin_interface::class);
         if ($exception == null) {
             $plugin_interface_mock->shouldReceive('is_section_completed')
@@ -102,7 +102,7 @@ class condition_test extends availability_adler_testcase {
         }
 
         $reflected_class = new ReflectionClass(condition::class);
-        $method = $reflected_class->getMethod('evaluate_room');
+        $method = $reflected_class->getMethod('evaluate_section');
         $method->setAccessible(true);
 
 
@@ -118,13 +118,13 @@ class condition_test extends availability_adler_testcase {
     }
 
 
-    public function provide_test_evaluate_room_requirements_data() {
+    public function provide_test_evaluate_section_requirements_data() {
         return [
             '1' => [
                 'statement' => "(5)v((7)^(4))",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     5 => true,
                     7 => true,
                     4 => false
@@ -134,7 +134,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(5)v((7)^(4))",
                 'expected' => false,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     5 => false,
                     7 => true,
                     4 => false
@@ -144,7 +144,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(1)",
                 'expected' => false,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => false,
                 ]
             ],
@@ -152,7 +152,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(1)",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                 ]
             ],
@@ -160,7 +160,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(1)^(2)",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => true,
                 ]
@@ -169,7 +169,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(1)^(2)",
                 'expected' => false,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => false,
                 ]
@@ -178,7 +178,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(1)v(2)",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => false,
                     2 => true,
                 ]
@@ -187,7 +187,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "1v(2)",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => false,
                 ]
@@ -196,7 +196,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "((1)^(2))v((3)^(4))",
                 'expected' => true,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => true,
                     3 => true,
@@ -207,7 +207,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "!((1)^(2))",
                 'expected' => false,
                 'exception' => null,
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => true,
                 ]
@@ -216,7 +216,7 @@ class condition_test extends availability_adler_testcase {
                 'statement' => "(w)^(2)",
                 'expected' => true,
                 'exception' => 'invalid_parameter_exception',
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => false,
                 ]
@@ -226,25 +226,25 @@ class condition_test extends availability_adler_testcase {
 
 
     /**
-     * @dataProvider provide_test_evaluate_room_requirements_data
+     * @dataProvider provide_test_evaluate_section_requirements_data
      */
-    public function test_evaluate_room_requirements($statement, $expected, $exception, $room_states) {
-        // map $room_states to the format of $room_states_map_format
-        $room_states = array_map(function ($key, $value) {
+    public function test_evaluate_section_requirements($statement, $expected, $exception, $section_states) {
+        // map $section_states to the format of $section_states_map_format
+        $section_states = array_map(function ($key, $value) {
             return [$key, 0, $value];
-        }, array_keys($room_states), $room_states);
+        }, array_keys($section_states), $section_states);
 
-        // create mock for condition evaluate_room
+        // create mock for condition evaluate_section
         $mock = $this->getMockBuilder(condition::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['evaluate_room'])
+            ->onlyMethods(['evaluate_section'])
             ->getMock();
-        // set return values for evaluate_room
-        $mock->method('evaluate_room')
-            ->will($this->returnValueMap($room_states));
+        // set return values for evaluate_section
+        $mock->method('evaluate_section')
+            ->will($this->returnValueMap($section_states));
 
-        // make evaluate_room_requirements accessible
-        $method = new ReflectionMethod(condition::class, 'evaluate_room_requirements');
+        // make evaluate_section_requirements accessible
+        $method = new ReflectionMethod(condition::class, 'evaluate_section_requirements');
         $method->setAccessible(true);
 
         // if $exception is not null, expect an exception
@@ -259,7 +259,7 @@ class condition_test extends availability_adler_testcase {
         return [
             [
                 'condition' => '1',
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                 ],
                 'section_names' => [
@@ -269,7 +269,7 @@ class condition_test extends availability_adler_testcase {
             ],
             [
                 'condition' => '1v2',
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => false,
                 ],
@@ -281,7 +281,7 @@ class condition_test extends availability_adler_testcase {
             ],
             [
                 'condition' => '1^!(2v3)',
-                'room_states' => [
+                'section_states' => [
                     1 => true,
                     2 => false,
                     3 => true,
@@ -301,12 +301,12 @@ class condition_test extends availability_adler_testcase {
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
-    public function test_make_condition_user_readable($condition, $room_states, $section_names, $expected) {
+    public function test_make_condition_user_readable($condition, $section_states, $section_names, $expected) {
         $condition_mock = Mockery::mock(condition::class)->makePartial();
         $condition_mock->shouldAllowMockingProtectedMethods();
 
-        foreach ($room_states as $room_id => $room_state) {
-            $condition_mock->shouldReceive('evaluate_room')->with($room_id, 0)->andReturn($room_state);
+        foreach ($section_states as $section_id => $section_state) {
+            $condition_mock->shouldReceive('evaluate_section')->with($section_id, 0)->andReturn($section_state);
         }
 
         $plugin_interface_mock = Mockery::mock('overload:' . plugin_interface::class);
@@ -366,25 +366,25 @@ class condition_test extends availability_adler_testcase {
         return [
             '1' => [
                 'installed_plugins' => ['adler' => '123'],
-                'evaluate_room_requirements' => true,
+                'evaluate_section_requirements' => true,
                 'not' => false,
                 'expected' => true
             ],
             '2' => [
                 'installed_plugins' => ['adler' => '123'],
-                'evaluate_room_requirements' => true,
+                'evaluate_section_requirements' => true,
                 'not' => true,
                 'expected' => false
             ],
             '3' => [
                 'installed_plugins' => ['adler' => '123'],
-                'evaluate_room_requirements' => false,
+                'evaluate_section_requirements' => false,
                 'not' => false,
                 'expected' => false
             ],
             '4' => [
                 'installed_plugins' => [],
-                'evaluate_room_requirements' => true,
+                'evaluate_section_requirements' => true,
                 'not' => true,
                 'expected' => false
             ],
@@ -394,7 +394,7 @@ class condition_test extends availability_adler_testcase {
     /**
      * @dataProvider provide_test_is_available_data
      */
-    public function test_is_available(array $installed_plugins, bool $evaluate_room_requirements, bool $not, bool $expected) {
+    public function test_is_available(array $installed_plugins, bool $evaluate_section_requirements, bool $not, bool $expected) {
         $info_mock = $this->getMockBuilder(info::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -409,10 +409,10 @@ class condition_test extends availability_adler_testcase {
 
         $condition_mock = $this->getMockBuilder(condition::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['evaluate_room_requirements'])
+            ->onlyMethods(['evaluate_section_requirements'])
             ->getMock();
-        $condition_mock->method('evaluate_room_requirements')
-            ->willReturn($evaluate_room_requirements);
+        $condition_mock->method('evaluate_section_requirements')
+            ->willReturn($evaluate_section_requirements);
         // set protected property core_plugin_manager_instance of condition_mock
         $reflection = new ReflectionClass($condition_mock);
         $property = $reflection->getProperty('core_plugin_manager_instance');
