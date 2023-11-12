@@ -7,11 +7,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023110800;
-$plugin->requires = 2021051712.05;  // Moodle version
+$plugin->version = 2023111200;
+$plugin->requires = 2022112800;  // Moodle version
 $plugin->component = 'availability_adler';
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '2.0.0-rc.1';
+$plugin->maturity = MATURITY_STABLE;
+$plugin->release = '2.0.0';
 $plugin->dependencies = array(
-    'local_adler' => ANY_VERSION,   // The Foo activity must be present (any version).
+    'local_adler' => '2.0.0',   // The Foo activity must be present (any version).
 );
