@@ -75,7 +75,7 @@ jobs:
 
       - name: Install plugin dependencies
         run: |
-          cd moodle/local/adler
+          cd moodle/availability/condition/adler
           composer i
 
       - name: PHP Lint
