@@ -35,10 +35,10 @@ jobs:
         database: [pgsql, mariadb]
         experimental: [false]
         include:
-          - php: ['8.1']
+          - php: '8.1'
             moodle-branch: 'MOODLE_403_STABLE'
-            database: [pgsql, mariadb]
-            experimental: [true]
+            database: mariadb
+            experimental: true
 
     continue-on-error: ${{ matrix.experimental }}
 
