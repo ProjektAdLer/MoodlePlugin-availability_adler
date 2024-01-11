@@ -3,7 +3,7 @@
 namespace availability_adler\lib;
 
 global $CFG;
-require_once($CFG->dirroot . '/local/adler/vendor/autoload.php');
+require_once($CFG->dirroot . 'availability/condition/adler/vendor/autoload.php');
 
 use advanced_testcase;
 use externallib_advanced_testcase;
