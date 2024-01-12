@@ -2,9 +2,26 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/ProjektAdLer/MoodlePluginAvailability/badge.svg?branch=main)](https://coveralls.io/github/ProjektAdLer/MoodlePluginAvailability?branch=main)
 
-Dieses Plugin implementiert eine _availability condition_ für die Adler-Raum-Logik (`requiredSpacesToEnter`, bspw `(5)v((7)^(4))`). 
+Dieses Plugin implementiert eine _availability condition_ für die Adler-Raum-Logik (`requiredSpacesToEnter`, bspw `(5)v((7)^(4))`).
 
 Ist das Haupt-Plugin nicht installiert wird die durch dieses Plugin implementierte _availability condition_ immer `true` zurück geben
+
+
+## Dependencies
+> [!CAUTION]
+> This plugin requires the `local_adler` plugin to be installed. Because moodle has a lot of problems with circular dependencies, 
+> this plugin does not list `local_adler` as a dependency in the plugin manager.
+> 
+> UPDATE: Now removed all dependency checks for all plugins as I'm pissed of about moodle saying: no you cannot update, because
+> the updated version of the dependency that IS ALREADY PRESENT IN THE CORRESPONDING DIRECTORY is "Unavailable".
+> 
+> Using this plugin without `local_adler` will result in unexpected behaviour and errors.
+
+| Plugin      | Version |
+|-------------|---------|
+| local_adler | ~3.0.0  |
+
+
 
 ## Kompatibilität
 Die minimal notwendige Moodle Version ist auf 4.1.0 gesetzt, daher wird die Installation auf älteren Versionen nicht funktionieren.
