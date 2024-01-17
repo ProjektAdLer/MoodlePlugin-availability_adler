@@ -8,6 +8,7 @@ use base_logger;
 use core_availability\info;
 use core_plugin_manager;
 use local_adler\plugin_interface;
+use local_logging\logger;
 use Mockery;
 use moodle_exception;
 use ReflectionClass;
@@ -422,6 +423,16 @@ class condition_test extends availability_adler_testcase {
         $property = $reflection->getProperty('condition');
         $property->setAccessible(true);
         $property->setValue($condition_mock, '1');
+
+
+        // mock logger as it does not exist because constructor is not executed
+        $logger_mock = Mockery::mock(Logger::class);
+        // ignore all method calls on mock
+        $logger_mock->shouldIgnoreMissing();
+        // set logger mock to $logger variable in class under test
+        $property = $reflection->getProperty('logger');
+        $property->setAccessible(true);
+        $property->setValue($condition_mock, $logger_mock);
 
 
         // invoke method is_available on $reflection

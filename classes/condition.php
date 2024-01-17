@@ -18,7 +18,7 @@ use restore_dbops;
 
 class condition extends availability_condition {
     use static_call_trait;
-    private logger $logger;
+    protected logger $logger;
 
     protected string $condition;
     protected $core_plugin_manager_instance;
