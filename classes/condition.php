@@ -11,12 +11,14 @@ use core_plugin_manager;
 use dml_exception;
 use invalid_parameter_exception;
 use local_adler\plugin_interface;
+use local_logging\logger;
 use moodle_exception;
 use restore_dbops;
 
 
 class condition extends availability_condition {
     use static_call_trait;
+    private logger $logger;
 
     protected string $condition;
     protected $core_plugin_manager_instance;
@@ -26,6 +28,7 @@ class condition extends availability_condition {
      * @throws invalid_parameter_exception
      */
     public function __construct($structure) {
+        $this->logger = new logger('availability_adler', 'condition');
         if (isset($structure->condition)) {
             try {
                 $this->evaluate_section_requirements($structure->condition, 0, true);
@@ -136,7 +139,7 @@ class condition extends availability_condition {
         // check if local_adler is available
         $plugins = $this->core_plugin_manager_instance->get_installed_plugins('local');
         if (!array_key_exists('adler', $plugins)) {
-            debugging('local_adler is not available', E_WARNING);
+            $this->logger->warning('local_adler is not available');
             $allow = true;
         } else {
             $allow = $this->evaluate_section_requirements($this->condition, $userid);
