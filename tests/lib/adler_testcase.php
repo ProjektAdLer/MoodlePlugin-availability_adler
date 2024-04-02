@@ -39,6 +39,6 @@ trait general_testcase_adjustments{
     }
 }
 
-abstract class availability_adler_testcase extends advanced_testcase {
+abstract class adler_testcase extends advanced_testcase {
     use general_testcase_adjustments;
 }

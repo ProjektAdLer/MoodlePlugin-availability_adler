@@ -3,7 +3,7 @@
 namespace availability_adler;
 
 
-use availability_adler\lib\availability_adler_testcase;
+use availability_adler\lib\adler_testcase;
 use base_logger;
 use core_availability\info;
 use core_plugin_manager;
@@ -19,7 +19,7 @@ global $CFG;
 require_once($CFG->dirroot . '/availability/condition/adler/tests/lib/adler_testcase.php');
 
 
-class condition_test extends availability_adler_testcase {
+class condition_test extends adler_testcase {
     public function provide_test_construct_data() {
         return [
             'valid' => [
