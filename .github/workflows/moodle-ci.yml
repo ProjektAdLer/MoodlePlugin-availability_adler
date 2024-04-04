@@ -145,6 +145,11 @@ jobs:
           # "pending completion" coveralls issue also appeared directly using php-coveralls
           moodle-plugin-ci coveralls-upload
 
+      - name: "Coveralls: Close parallel build (workaround)"
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+
 #     There are no behat tests
 #      - name: Behat features
 #        if: ${{ always() }}
