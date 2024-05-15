@@ -24,10 +24,6 @@ Ist das Haupt-Plugin nicht installiert wird die durch dieses Plugin implementier
 
 
 ## Kompatibilität
-Die minimal notwendige Moodle Version ist auf 4.1.0 gesetzt, daher wird die Installation auf älteren Versionen nicht funktionieren.
-Prinzipiell sollte dieses Plugin auch auf älteren Versionen funktionieren, dies wird aber nicht getestet und spätestens bei der
-Nutzung weiterer AdLer Plugins wird es zu Problemen kommen, da diese Features nutzen, die erst in neueren Moodle Versionen verfügbar sind.
-
 Folgende Versionen werden unterstützt (mit mariadb und postresql getestet):
 
 | Moodle Branch           | PHP Version |
@@ -37,6 +33,9 @@ Folgende Versionen werden unterstützt (mit mariadb und postresql getestet):
 | MOODLE_402_STABLE       | 8.2         |
 | MOODLE_403_STABLE       | 8.1         |
 | MOODLE_403_STABLE       | 8.2         |
+| MOODLE_404_STABLE       | 8.1         |
+| MOODLE_404_STABLE       | 8.2         |
+| MOODLE_404_STABLE       | 8.3         |
 
 ## Installation
 1. Dieses Plugin benötigt das Plugin `local_adler` als Abhängigkeit. Beide müssen zeitgleich installiert werden (= vor dem upgrade in die Moodle-Installation entpackt sein). Installation siehe `local_adler`
