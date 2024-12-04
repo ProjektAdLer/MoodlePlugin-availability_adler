@@ -261,7 +261,7 @@ class condition extends availability_condition {
                 $i = $j - 1;
 
                 // add updated id to new string
-                $updated_id = di::get(restore_dbops::class)::get_backup_ids_record($restoreid, 'course_section', $number);
+                $updated_id = restore_dbops::class::get_backup_ids_record($restoreid, 'course_section', $number);
                 if ($updated_id == false) {
                     throw new moodle_exception('unknown_section', 'availability_adler', '', NULL, 'section: ' . $number);
                 }

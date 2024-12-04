@@ -485,13 +485,11 @@ class condition_test extends adler_testcase {
 
     /**
      * @dataProvider provide_test_update_after_restore_data
+     * @runInSeparateProcess
      *
      *  # ANF-ID: [MVP2]
      */
     public function test_update_after_restore($condition, $backup_id_mappings, $expected_updated_condition, $expect_exception) {
-        global $CFG;
-        require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-
         // unused but required variables
         $restoreid = 123;
         $courseid = 456;
@@ -501,7 +499,7 @@ class condition_test extends adler_testcase {
         $name = 'test';
 
         // create get_backup_ids_record return map
-        $restore_dbops_mock = Mockery::mock(restore_dbops::class);
+        $restore_dbops_mock = Mockery::mock('alias:' . restore_dbops::class);
         $return_map = [];
         foreach ($backup_id_mappings as $mapping) {
             $return_map[] = [$restoreid, 'course_section', (string)$mapping[0], $mapping[1]];
@@ -515,7 +513,6 @@ class condition_test extends adler_testcase {
                 }
                 return false;
             });
-        di::set(restore_dbops::class, $restore_dbops_mock);
 
         $condition_instance = Mockery::mock(condition::class)->makePartial();
         // set condition
