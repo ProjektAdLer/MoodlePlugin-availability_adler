@@ -21,7 +21,7 @@ require_once($CFG->dirroot . '/availability/condition/adler/tests/lib/adler_test
 
 
 class condition_test extends adler_testcase {
-    public function provide_test_construct_data() {
+    public static function provide_test_construct_data() {
         return [
             'valid' => [
                 'structure' => (object)[
@@ -70,7 +70,7 @@ class condition_test extends adler_testcase {
         $this->assertEquals($expected_condition, $condition);
     }
 
-    public function provide_test_evaluate_section_data() {
+    public static function provide_test_evaluate_section_data() {
         return [
             [
                 'exception' => null,
@@ -123,7 +123,7 @@ class condition_test extends adler_testcase {
     }
 
 
-    public function provide_test_evaluate_section_requirements_data() {
+    public static function provide_test_evaluate_section_requirements_data() {
         return [
             '1' => [
                 'statement' => "(5)v((7)^(4))",
@@ -262,7 +262,7 @@ class condition_test extends adler_testcase {
         $this->assertEquals($expected, $method->invoke($mock, $statement, 0));
     }
 
-    public function provide_test_make_condition_user_readable_data() {
+    public static function provide_test_make_condition_user_readable_data() {
         return [
             [
                 'condition' => '1',
@@ -376,7 +376,7 @@ class condition_test extends adler_testcase {
         $this->assertEquals($adler_statement, $result);
     }
 
-    public function provide_test_is_available_data() {
+    public static function provide_test_is_available_data() {
         return [
             '1' => [
                 'installed_plugins' => ['adler' => '123'],
@@ -460,7 +460,7 @@ class condition_test extends adler_testcase {
         $this->assertEquals($expected, $result);
     }
 
-    public function provide_test_update_after_restore_data() {
+    public static function provide_test_update_after_restore_data() {
         return [
             '1' => [
                 'condition' => "(1)^(20)",
