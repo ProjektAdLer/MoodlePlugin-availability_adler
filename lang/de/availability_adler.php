@@ -19,3 +19,5 @@ $string['node_adler_rule'] = 'Adler Regel: {$a}';
 $string['condition_operator_pretty_and'] = 'und';
 $string['condition_operator_pretty_or'] = 'oder';
 $string['condition_operator_pretty_not'] = 'nicht';
+
+$string['privacy:metadata'] = 'Das Raumlogik-Plugin speichert keine Daten.';

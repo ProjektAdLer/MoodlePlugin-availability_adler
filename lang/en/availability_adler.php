@@ -19,3 +19,5 @@ $string['node_adler_rule'] = 'Adler rule: {$a}';
 $string['condition_operator_pretty_and'] = 'and';
 $string['condition_operator_pretty_or'] = 'or';
 $string['condition_operator_pretty_not'] = 'not';
+
+$string['privacy:metadata'] = 'The Room logic plugin does not store any data.';
