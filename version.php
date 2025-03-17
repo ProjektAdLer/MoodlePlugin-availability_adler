@@ -7,11 +7,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024102600;
+$plugin->version = 2025031600;
 $plugin->requires = 2024042200;  // Moodle version
 $plugin->component = 'availability_adler';
-$plugin->release = '4.0.0-rc.1';
-$plugin->maturity = MATURITY_RC;
+$plugin->release = '4.1.0';
+$plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = array(
     'local_logging' => ANY_VERSION,
 );
